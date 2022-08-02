@@ -1,4 +1,5 @@
 # raw2rgb
+![Tests](https://github.com/vilktor370/raw2rgb/actions/workflows/tests.yml/badge.svg)
 An image processing pipeline from RAW image format to RGB color image.
 
 Convert raw image format to RGB png file.
