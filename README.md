@@ -28,8 +28,8 @@ Result RGB image.
 
 ```python
 
-from raw2rgb import RawConvert
-raw_cvtr = RawConvert()
+import raw2rgb
+raw_cvtr = raw2rgb.convert.RawConvert()
 raw_cvtr.toRGB("data/raw/sample.tiff","data/rgb/sample.png")
 
 ```
