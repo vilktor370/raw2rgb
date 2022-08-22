@@ -3,15 +3,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import convolve2d
 
+
 class RawConvert(object):
     def __init__(self):
         self.wb_multipliers = [2.217041, 1.000000, 1.192484]
-        
-    def toRGB(self, tiffFilePath:str, outputFileName='convert_rgb.png',isSaved=True):
+
+    def toRGB(self, tiffFilePath: str, outputFileName='convert_rgb.png', isSaved=True):
         """
-        If you don't want to go through the conversion step by step. 
+        If you don't want to go through the conversion step by step.
         This function takes cares of all the work for you.
-        
+
         Args:
             tiffFilePath (str): input raw image file path/ .tiff file path
             outputFileName (str): specify output file name. Defaults to "convert_rgb.png"
@@ -22,26 +23,25 @@ class RawConvert(object):
         """
         raw_data = Image.open(tiffFilePath)
         raw = np.array(raw_data).astype(np.float64)
-        
+
         # step 1: normalize an image
         normalize_img = self.normalize(raw)
-        
+
         # step 2: adjust the white balance
         balanced_img = self.whiteBalance(normalize_img)
-        
+
         # step 3: demosaic the img
         bayer_img = self.demosaic(balanced_img)
-        
+
         # step 4: color correction
         rgb_img = self.colorCorrection(bayer_img)
-        
+
         # step 5: (Optinal) adjust brightness
         polised_img = self.brightnessCorrection(rgb_img, 2.22)
         if isSaved:
             plt.imsave(outputFileName, polised_img)
         print("SUCCESS!")
-        
-    
+
     def normalize(self, rawImg: np.ndarray) -> np.ndarray:
         """
         Step1: Normalize an Image
@@ -56,7 +56,7 @@ class RawConvert(object):
         data_max = np.max(rawImg)
         linear_bayer = (rawImg - data_min) / (data_max - data_min)
         return linear_bayer
-    
+
     def whiteBalance(self, normRawImg: np.ndarray, align='rggb') -> np.ndarray:
         """
         Step2: Apply white balance to a normalized image
@@ -91,11 +91,11 @@ class RawConvert(object):
             mask[0::2, 1::2] = self.wb_multipliers[2]  # b
         balanced_bayer = np.multiply(normRawImg, mask)
         return balanced_bayer
-    
+
     def demosaic(self, rawImg) -> np.ndarray:
         """
         Step3: Bilinear Interpolation of the missing pixels
-        
+
         Assumes a Bayer CFA in the 'rggb' layout
           R G R G
           G B G B
@@ -183,8 +183,8 @@ class RawConvert(object):
 
         output = np.stack((r, g, b), axis=2)
         return output
-    
-    def colorCorrection(self, rawImg:np.ndarray) -> np.ndarray:
+
+    def colorCorrection(self, rawImg: np.ndarray) -> np.ndarray:
         """
         Final Step: Color Correction(fine tunning the RGB color)
 
@@ -195,8 +195,8 @@ class RawConvert(object):
             np.ndarray: Final polished image in sRGB color space.
         """
         rgb2xyz = np.array([[0.4124564, 0.3575761, 0.1804375],
-                        [0.2126729, 0.7151522, 0.0721750],
-                        [0.0193339, 0.1191920, 0.9503041]])
+                            [0.2126729, 0.7151522, 0.0721750],
+                            [0.0193339, 0.1191920, 0.9503041]])
         xyz2cam = np.array([[0.6653, -0.1486, -0.0611],
                             [-0.4221, 1.3303, 0.0929],
                             [-0.0881, 0.2416, 0.7226]])
@@ -204,7 +204,7 @@ class RawConvert(object):
         denom = np.tile(np.reshape(np.sum(rgb2cam, axis=1), (3, -1)), (1, 3))
         rgb2cam = np.divide(rgb2cam, denom)  # Normalize rows to 1
         cam2rgb = np.linalg.inv(rgb2cam)
-        
+
         # Apply camera matrix
         r = cam2rgb[0, 0] * rawImg[:, :, 0] + cam2rgb[0, 1] * rawImg[:, :, 1] + cam2rgb[0, 2] * rawImg[:, :, 2]
         g = cam2rgb[1, 0] * rawImg[:, :, 0] + cam2rgb[1, 1] * rawImg[:, :, 1] + cam2rgb[1, 2] * rawImg[:, :, 2]
@@ -213,8 +213,8 @@ class RawConvert(object):
         lin_srgb[lin_srgb > 1.0] = 1.0  # Always keep image clipped b/w 0-1
         lin_srgb[lin_srgb < 0.0] = 0.0
         return lin_srgb
-    
-    def brightnessCorrection(self, img:np.ndarray, gamma=2.2) -> np.ndarray:
+
+    def brightnessCorrection(self, img: np.ndarray, gamma=2.2) -> np.ndarray:
         """
         Optinal: Gamma correction(adjust the brightness of an image).
         Only necessary if the image is too dark or bright
@@ -229,11 +229,12 @@ class RawConvert(object):
         # gamma correction
         nl_srgb = img ** (1 / gamma)
         return nl_srgb
-    
-    
+
+
 def main():
     raw_cvtr = RawConvert()
-    raw_cvtr.toRGB("data/raw/sample.tiff","data/rgb/sample.png")
-    
+    raw_cvtr.toRGB("data/raw/sample.tiff", "data/rgb/sample.png")
+
+
 if __name__ == "__main__":
     main()
