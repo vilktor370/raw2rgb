@@ -22,6 +22,7 @@ class RawConvert(object):
         """
         raw_data = Image.open(tiffFilePath)
         raw = np.array(raw_data).astype(np.float64)
+        
         # step 1: normalize an image
         normalize_img = self.normalize(raw)
         
@@ -36,7 +37,6 @@ class RawConvert(object):
         
         # step 5: (Optinal) adjust brightness
         polised_img = self.brightnessCorrection(rgb_img, 2.22)
-        
         if isSaved:
             plt.imsave(outputFileName, polised_img)
         print("SUCCESS!")
@@ -226,6 +226,14 @@ class RawConvert(object):
         Returns:
             np.ndarray: brigh images
         """
-            # gamma correction
+        # gamma correction
         nl_srgb = img ** (1 / gamma)
         return nl_srgb
+    
+    
+def main():
+    raw_cvtr = RawConvert()
+    raw_cvtr.toRGB("data/raw/sample.tiff","data/rgb/sample.png")
+    
+if __name__ == "__main__":
+    main()
